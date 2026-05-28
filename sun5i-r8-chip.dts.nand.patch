@@ -1,0 +1,55 @@
+From: CHIP Builder <chip@localhost>
+Subject: [PATCH] ARM: dts: sun5i-r8-chip: enable on-board NAND in SLC mode
+Forwarded: not-needed
+
+Enable the NAND controller and declare the on-board NAND partition layout
+(SPL, SPL.backup, U-Boot, env, rootfs) so the CHIP can boot from raw NAND
+and mount its rootfs as ubifs.
+
+--- a/arch/arm/boot/dts/allwinner/sun5i-r8-chip.dts
++++ b/arch/arm/boot/dts/allwinner/sun5i-r8-chip.dts
+@@ -280,3 +280,44 @@
+ 	usb0_vbus-supply = <&reg_usb0_vbus>;
+ 	usb1_vbus-supply = <&reg_vcc5v0>;
+ };
++
++&nfc {
++	pinctrl-names = "default";
++	pinctrl-0 = <&nand_pins &nand_cs0_pin &nand_rb0_pin>;
++	status = "okay";
++
++	nand@0 {
++		#address-cells = <2>;
++		#size-cells = <2>;
++		reg = <0>;
++		allwinner,rb = <0>;
++		nand-ecc-mode = "hw";
++		nand-ecc-maximize;
++		nand-on-flash-bbt;
++		spl@0 {
++			label = "SPL";
++			reg = /bits/ 64 <0x0 0x400000>;
++		};
++
++		spl-backup@400000 {
++			label = "SPL.backup";
++			reg = /bits/ 64 <0x400000 0x400000>;
++		};
++
++		u-boot@800000 {
++			label = "U-Boot";
++			reg = /bits/ 64 <0x800000 0x400000>;
++		};
++
++		env@c00000 {
++			label = "env";
++			reg = /bits/ 64 <0xc00000 0x400000>;
++		};
++
++		rootfs@1000000 {
++			label = "rootfs";
++			reg = /bits/ 64 <0x1000000 0x1ff000000>;
++			slc-mode;
++		};
++	};
++};
