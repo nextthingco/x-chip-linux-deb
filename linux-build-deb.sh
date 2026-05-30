@@ -7,6 +7,9 @@
 
 HERE=$PWD
 
+# start clean so re-runs don't trip over a previous build/ (root-owned,
+# already-extracted source, etc.)
+rm -rf build
 mkdir build
 cd build
 apt-get source linux
@@ -47,3 +50,7 @@ debian/rules debian/control-real || true
 # armhf, binary, unsigned, cross compile
 DEB_BUILD_OPTIONS="parallel=$(nproc)" \
     dpkg-buildpackage -aarmhf -B -uc -us -Pcross
+
+# hand the build outputs (the .debs live in build/) back to the invoking
+# host user (HOST_UID/GID from the Makefile), so build/ isn't root-owned.
+[ -n "${HOST_UID:-}" ] && chown -R "$HOST_UID:$HOST_GID" "$HERE/build" || true

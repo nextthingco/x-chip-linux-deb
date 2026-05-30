@@ -6,9 +6,15 @@ Enable the NAND controller and declare the on-board NAND partition layout
 (SPL, SPL.backup, U-Boot, env, rootfs) so the CHIP can boot from raw NAND
 and mount its rootfs as ubifs.
 
+Use the canonical "fixed-partitions" container rather than partitions as
+direct children of nand@0: the latter is the deprecated binding and the
+kernel only parses it via a finicky legacy fallback, which on this build
+does not produce the partitions (so the rootfs partition / slc-mode flag
+never appear). The dedicated container takes the well-tested parser path.
+
 --- a/arch/arm/boot/dts/allwinner/sun5i-r8-chip.dts
 +++ b/arch/arm/boot/dts/allwinner/sun5i-r8-chip.dts
-@@ -280,3 +280,44 @@
+@@ -280,3 +280,47 @@
  	usb0_vbus-supply = <&reg_usb0_vbus>;
  	usb1_vbus-supply = <&reg_vcc5v0>;
  };
@@ -26,30 +32,33 @@ and mount its rootfs as ubifs.
 +		nand-ecc-mode = "hw";
 +		nand-ecc-maximize;
 +		nand-on-flash-bbt;
-+		spl@0 {
-+			label = "SPL";
-+			reg = /bits/ 64 <0x0 0x400000>;
-+		};
 +
-+		spl-backup@400000 {
-+			label = "SPL.backup";
-+			reg = /bits/ 64 <0x400000 0x400000>;
-+		};
++		partitions {
++			compatible = "fixed-partitions";
++			#address-cells = <2>;
++			#size-cells = <2>;
 +
-+		u-boot@800000 {
-+			label = "U-Boot";
-+			reg = /bits/ 64 <0x800000 0x400000>;
-+		};
-+
-+		env@c00000 {
-+			label = "env";
-+			reg = /bits/ 64 <0xc00000 0x400000>;
-+		};
-+
-+		rootfs@1000000 {
-+			label = "rootfs";
-+			reg = /bits/ 64 <0x1000000 0x1ff000000>;
-+			slc-mode;
++			partition@0 {
++				label = "SPL";
++				reg = /bits/ 64 <0x0 0x400000>;
++			};
++			partition@400000 {
++				label = "SPL.backup";
++				reg = /bits/ 64 <0x400000 0x400000>;
++			};
++			partition@800000 {
++				label = "U-Boot";
++				reg = /bits/ 64 <0x800000 0x400000>;
++			};
++			partition@c00000 {
++				label = "env";
++				reg = /bits/ 64 <0xc00000 0x400000>;
++			};
++			partition@1000000 {
++				label = "rootfs";
++				reg = /bits/ 64 <0x1000000 0x1ff000000>;
++				slc-mode;
++			};
 +		};
 +	};
 +};

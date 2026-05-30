@@ -1,4 +1,4 @@
-FROM debian
+FROM debian:trixie
 
 # need a deb-src entry
 COPY build.sources /etc/apt/sources.list.d
