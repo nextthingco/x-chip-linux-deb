@@ -21,8 +21,8 @@ mkdir -p "debian/patches/$(dirname "${PATCH}")"
 cp "${HERE}/sun5i-r8-chip.dts.nand.patch" "debian/patches/${PATCH}"
 echo "${PATCH}" >> debian/patches/series
 
-# append nand configs to sunxi_defconfig
-cat arch/arm/configs/sunxi_defconfig "${HERE}/nand.cfg" > debian/config/armhf/config.chip
+# ensure nand configs are in, this might be overkill on top of armmp
+cp "${HERE}/nand.cfg" debian/config/armhf/config.chip
 
 # grab from this file in apt-get source linux, and replace flavors (lpae armmp rt)
 # with just this one
