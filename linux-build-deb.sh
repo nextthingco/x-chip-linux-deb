@@ -15,23 +15,31 @@ cd build
 apt-get source linux
 cd linux-*
 
-# Give every build a unique, monotonically-increasing version. The Debian source
-# version (e.g. 6.12.86-1) is identical across rebuilds until Debian itself bumps
-# it, so without this a rebuilt -chip kernel (new nand.cfg, DT patch, etc.) keeps
-# the same version and devices never `apt upgrade` to it. Append a build id (unix
-# time by default; set CHIP_BUILD_ID -- e.g. the kernel submodule's commit time
-# -- for reproducible builds). This only changes the package VERSION, not the
-# package name / ABI (those derive from the upstream version + abiname), so uname
-# and the linux-image-*-chip name stay stable.
+# Give every build a unique, monotonically-increasing version so devices `apt
+# upgrade` to a rebuilt -chip kernel even when Debian's own version (e.g.
+# 6.12.86-1) is unchanged (new nand.cfg, DT patch, etc.).
+#
+# Debian's kernel packaging REJECTS arbitrary version suffixes for a release
+# suite: gencontrol.py checks the revision against trixie's revision_regex
+# '\d+(\.\d+)?(\+deb13u\d+)?' (debian/config/defines.toml) -> a '+chip<ts>'
+# revision dies with "Can't upload to trixie with a version of ...". So we use
+# the allowed '.N' minor-revision slot, inserting our build serial after the
+# leading revision integer and BEFORE any +deb13uN (the regex requires that
+# order). e.g. 6.12.86-1 -> 6.12.86-1.<serial>; 6.12.86-1+deb13u2 ->
+# 6.12.86-1.<serial>+deb13u2.
+#
+# We EDIT the top changelog entry IN PLACE rather than prepend a new stanza: a
+# second trixie entry with the same upstream version trips gencontrol's ABI
+# serialisation (it appends '.1' to the abiname), which would change the package
+# name / uname. Editing in place keeps abiname = <upstream>+deb13, so the
+# linux-image-*-chip name and uname stay stable -- only the VERSION moves.
+#
+# CHIP_BUILD_ID defaults to unix time; set it (e.g. the kernel submodule commit
+# epoch) for reproducible builds.
 base_ver=$(dpkg-parsechangelog -S Version)
-chip_ver="${base_ver}+chip${CHIP_BUILD_ID:-$(date -u +%s)}"
-{
-    printf '%s (%s) trixie; urgency=medium\n\n' "$(dpkg-parsechangelog -S Source)" "$chip_ver"
-    printf '  * Automated CHIP build (%s).\n\n' "$chip_ver"
-    printf ' -- CHIP CI <software@nextthing.co>  %s\n\n' "$(date -uR)"
-    cat debian/changelog
-} > debian/changelog.chip
-mv debian/changelog.chip debian/changelog
+serial="${CHIP_BUILD_ID:-$(date -u +%s)}"
+chip_ver=$(printf '%s' "$base_ver" | sed -E "s/^(.*-[0-9]+)(\+deb[0-9]+u[0-9]+)?$/\1.${serial}\2/")
+sed -i -E "1s/\([^)]*\)/(${chip_ver})/" debian/changelog
 
 # NAND device-tree patch.
 PATCH=bugfix/arm/sun5i-r8-chip-enable-nand.patch
