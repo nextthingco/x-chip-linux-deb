@@ -15,6 +15,24 @@ cd build
 apt-get source linux
 cd linux-*
 
+# Give every build a unique, monotonically-increasing version. The Debian source
+# version (e.g. 6.12.86-1) is identical across rebuilds until Debian itself bumps
+# it, so without this a rebuilt -chip kernel (new nand.cfg, DT patch, etc.) keeps
+# the same version and devices never `apt upgrade` to it. Append a build id (unix
+# time by default; set CHIP_BUILD_ID -- e.g. the kernel submodule's commit time
+# -- for reproducible builds). This only changes the package VERSION, not the
+# package name / ABI (those derive from the upstream version + abiname), so uname
+# and the linux-image-*-chip name stay stable.
+base_ver=$(dpkg-parsechangelog -S Version)
+chip_ver="${base_ver}+chip${CHIP_BUILD_ID:-$(date -u +%s)}"
+{
+    printf '%s (%s) trixie; urgency=medium\n\n' "$(dpkg-parsechangelog -S Source)" "$chip_ver"
+    printf '  * Automated CHIP build (%s).\n\n' "$chip_ver"
+    printf ' -- CHIP CI <software@nextthing.co>  %s\n\n' "$(date -uR)"
+    cat debian/changelog
+} > debian/changelog.chip
+mv debian/changelog.chip debian/changelog
+
 # NAND device-tree patch.
 PATCH=bugfix/arm/sun5i-r8-chip-enable-nand.patch
 mkdir -p "debian/patches/$(dirname "${PATCH}")"
