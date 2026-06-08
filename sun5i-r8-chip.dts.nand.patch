@@ -1,5 +1,5 @@
 From: CHIP Builder <chip@localhost>
-Subject: [PATCH] ARM: dts: sun5i-r8-chip: enable on-board NAND in SLC mode
+Subject: [PATCH] ARM: dts: sun5i-r8-chip: enable on-board NAND in SLC mode + 1-bit SDIO wifi
 Forwarded: not-needed
 
 Enable the NAND controller and declare the on-board NAND partition layout
@@ -14,7 +14,7 @@ never appear). The dedicated container takes the well-tested parser path.
 
 --- a/arch/arm/boot/dts/allwinner/sun5i-r8-chip.dts
 +++ b/arch/arm/boot/dts/allwinner/sun5i-r8-chip.dts
-@@ -280,3 +280,47 @@
+@@ -280,3 +280,53 @@
  	usb0_vbus-supply = <&reg_usb0_vbus>;
  	usb1_vbus-supply = <&reg_vcc5v0>;
  };
@@ -61,4 +61,10 @@ never appear). The dedicated container takes the well-tested parser path.
 +			};
 +		};
 +	};
++};
++
++&mmc0 {
++	// RTL8723BS acting up, bw: 1 seems to fix it, max-frequency included for fun
++	bus-width = <1>;
++	max-frequency = <25000000>;
 +};
