@@ -47,6 +47,12 @@ mkdir -p "debian/patches/$(dirname "${PATCH}")"
 cp "${HERE}/sun5i-r8-chip.dts.nand.patch" "debian/patches/${PATCH}"
 echo "${PATCH}" >> debian/patches/series
 
+# Build the base dtb with __symbols__ (dtc -@) so u-boot's `fdt apply` can
+# resolve DIP overlay label references at boot.
+SYMPATCH=bugfix/arm/sun5i-r8-chip-dtb-symbols.patch
+cp "${HERE}/sun5i-r8-chip.dtb-symbols.patch" "debian/patches/${SYMPATCH}"
+echo "${SYMPATCH}" >> debian/patches/series
+
 # ensure nand configs are in, this might be overkill on top of armmp
 cp "${HERE}/nand.cfg" debian/config/armhf/config.chip
 
