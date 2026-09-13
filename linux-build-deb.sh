@@ -53,6 +53,14 @@ SYMPATCH=bugfix/arm/sun5i-r8-chip-dtb-symbols.patch
 cp "${HERE}/sun5i-r8-chip.dtb-symbols.patch" "debian/patches/${SYMPATCH}"
 echo "${SYMPATCH}" >> debian/patches/series
 
+# Composite overscan: restores NextThing's sun4i_tv overscan compensation that
+# mainline dropped. Tuned with sun4i_tv.overscan_x/_y on the kernel cmdline
+# (set in x-chip-os's bootscr.chip); 0 = mainline behaviour. Same file as
+# x-chip-os/kernel's copy.
+OVERSCANPATCH=bugfix/arm/drm-sun4i-tv-composite-overscan.patch
+cp "${HERE}/sun4i-tv-overscan.patch" "debian/patches/${OVERSCANPATCH}"
+echo "${OVERSCANPATCH}" >> debian/patches/series
+
 # ensure nand configs are in, this might be overkill on top of armmp
 cp "${HERE}/nand.cfg" debian/config/armhf/config.chip
 
